@@ -1,0 +1,17 @@
+# Rust build artifacts
+/target
+**/*.rs.bk
+*.pdb
+Cargo.lock.bak
+
+# Editor / OS noise
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Local environment
+.env
+.env.local

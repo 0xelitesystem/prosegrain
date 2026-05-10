@@ -1,0 +1,29 @@
+[package]
+name = "prosegrain"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+authors = ["prosegrain contributors"]
+description = "Catches AI-generated prose patterns: structural rhythm, false agency, formulaic cadence — not just word lists."
+repository = "https://github.com/0xelitesystem/prosegrain"
+homepage = "https://github.com/0xelitesystem/prosegrain"
+license = "MIT"
+readme = "README.md"
+keywords = ["linter", "prose", "writing", "anti-slop", "ai-detection"]
+categories = ["command-line-utilities", "text-processing"]
+
+[[bin]]
+name = "prosegrain"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "=4.5.4", features = ["derive"] }
+regex = "1.10"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
