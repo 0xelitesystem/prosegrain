@@ -39,7 +39,7 @@ pub fn strip_code_blocks(input: &str) -> String {
         if c == '`' {
             // find matching backtick on same line
             let rest = &with_ignores[i + 1..];
-            if let Some(end) = rest.find(|ch: char| ch == '`' || ch == '\n') {
+            if let Some(end) = rest.find(['`', '\n']) {
                 if rest.as_bytes()[end] == b'`' {
                     out.push(' ');
                     for _ in 0..end {
