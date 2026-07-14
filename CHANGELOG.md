@@ -7,7 +7,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
-## [0.1.0] — 2026-05-09
+## [0.1.0], 2026-05-09
 
 First release. CLI works, tests pass, README dogfoods clean.
 
@@ -31,7 +31,7 @@ First release. CLI works, tests pass, README dogfoods clean.
 
 - Sentence splitter is heuristic; abbreviations like "Dr." can over-split.
 - Score is unreliable for text under ~50 words.
-- No custom rule packs yet — rules are baked in.
+- No custom rule packs yet, rules are baked in.
 - Calibrated for English; other languages will be noisy.
 
 [Unreleased]: https://github.com/0xelitesystem/prosegrain/compare/v0.1.0...HEAD

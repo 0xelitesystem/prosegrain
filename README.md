@@ -2,7 +2,7 @@
 
 A linter for AI-generated prose patterns. Catches the patterns word banlists miss: structural cadence, false agency, rhythmic uniformity, and the "not just X, it's Y" reflex.
 
-Most existing anti-slop tools are skill files or system prompts — they tell an LLM how to write at generation time. They're useless on text that's already written. `prosegrain` runs against any text file you give it. No LLM call. No account. One binary.
+Most existing anti-slop tools are skill files or system prompts, they tell an LLM how to write at generation time. They're useless on text that's already written. `prosegrain` runs against any text file you give it. No LLM call. No account. One binary.
 
 ## What it catches
 
@@ -11,7 +11,7 @@ Most existing anti-slop tools are skill files or system prompts — they tell an
 | Rule | Severity | What it flags |
 |------|----------|---------------|
 | `assistant-opener` | strong | "Certainly!", "Absolutely!", "I'm happy to help" |
-| `not-but-construct` | strong | "It's not just X, it's Y" — overused AI shape |
+| `not-but-construct` | strong | "It's not just X, it's Y", overused AI shape |
 | `false-agency` | warn | "The data tells us", "the market rewards" |
 | `filler-phrase` | warn | "In today's world", "in conclusion", "when it comes to" |
 | `triple-list-cadence` | warn | Three or more "X, Y, and Z" lists in one paragraph |
@@ -104,7 +104,7 @@ examples/slop-sample.md:5:1  warn    false-agency
 
 examples/slop-sample.md:7:1  strong  not-but-construct
   "Not just X, it's Y" is one of the most overused AI shapes. Pick one claim and state it directly.
-  > It's not just about productivity — it's
+  > It's not just about productivity, it's
 
 35 finding(s)  |  grain 63/100  |  verdict: ai-leaning  |  hint: 19  warn: 14  strong: 2
 ```
@@ -113,7 +113,7 @@ Run against the clean sample:
 
 ```
 $ prosegrain examples/clean-sample.md
-examples/clean-sample.md: clean — grain 100 (human)
+examples/clean-sample.md: clean, grain 100 (human)
 ```
 
 ## The grain score
@@ -122,10 +122,10 @@ examples/clean-sample.md: clean — grain 100 (human)
 
 | Grain | Verdict |
 |-------|---------|
-| 85–100 | human |
-| 65–84 | mostly-human |
-| 40–64 | ai-leaning |
-| 0–39 | ai-heavy |
+| 85 to 100 | human |
+| 65 to 84 | mostly-human |
+| 40 to 64 | ai-leaning |
+| 0 to 39 | ai-heavy |
 
 Caveat: scores on text under ~50 words aren't meaningful. The findings list still is.
 
@@ -163,9 +163,9 @@ This section won't be linted. "It's not just X, it's Y" is fine here.
 
 ## Roadmap
 
-- **v0.2** — YAML config for custom word lists and rule overrides; web UI for paste-and-check.
-- **v0.3** — VS Code extension; pre-commit hook helper.
-- **v0.4** — Pattern catalog moved to a separate versioned repo with PR workflow.
+- **v0.2**, YAML config for custom word lists and rule overrides; web UI for paste-and-check.
+- **v0.3**, VS Code extension; pre-commit hook helper.
+- **v0.4**, Pattern catalog moved to a separate versioned repo with PR workflow.
 
 ## Contributing
 
