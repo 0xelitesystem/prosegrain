@@ -171,6 +171,10 @@ This section won't be linted. "It's not just X, it's Y" is fine here.
 
 Patterns evolve. If you spot an AI tell that we miss, open an issue with a real example (a paragraph, not a one-liner). PRs adding rules need a new test in `tests/integration.rs` that fails before the rule and passes after.
 
+## More
+
+Part of a catalog of single-file browser tools and plain-language references, all MIT licensed and dependency-free: [0xelitesystem.github.io](https://0xelitesystem.github.io/). Built by [elitesystem.ai](https://elitesystem.ai).
+
 ## License
 
 MIT. See `LICENSE`.
