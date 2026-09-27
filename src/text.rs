@@ -145,6 +145,11 @@ pub fn sentences(text: &str) -> Vec<Range<usize>> {
                 i = j;
                 continue;
             }
+            // Every later byte of this run would reach the same `j` and the
+            // same answer, so skip the run instead of rescanning it from each
+            // byte (which was quadratic on a long run of dots).
+            i = j;
+            continue;
         }
         i += 1;
     }
@@ -241,9 +246,117 @@ pub fn position(input: &str, offset: usize) -> (usize, usize) {
     (line, col)
 }
 
+/// Bytes per checkpoint in [`LineIndex`].
+const CHAR_BLOCK: usize = 256;
+
+/// Answers [`position`] queries without rescanning the input from byte 0.
+///
+/// Rules report one position per match, and calling [`position`] for each
+/// one is quadratic on input with many matches. Build this once per input
+/// and call [`LineIndex::position`] instead; it gives the same answers.
+pub struct LineIndex<'a> {
+    bytes: &'a [u8],
+    /// Byte offset of every `\n`.
+    newlines: Vec<usize>,
+    /// `chars_at_block[k]` is the number of chars that start before byte
+    /// `k * CHAR_BLOCK`.
+    chars_at_block: Vec<usize>,
+}
+
+impl<'a> LineIndex<'a> {
+    pub fn new(input: &'a str) -> Self {
+        let bytes = input.as_bytes();
+        let mut newlines = Vec::new();
+        let mut chars_at_block = Vec::with_capacity(bytes.len() / CHAR_BLOCK + 2);
+        let mut chars = 0usize;
+        for (k, block) in bytes.chunks(CHAR_BLOCK).enumerate() {
+            chars_at_block.push(chars);
+            for (j, &b) in block.iter().enumerate() {
+                if b == b'\n' {
+                    newlines.push(k * CHAR_BLOCK + j);
+                }
+                if !is_utf8_continuation(b) {
+                    chars += 1;
+                }
+            }
+        }
+        // Entry for an offset at the very end of the input.
+        chars_at_block.push(chars);
+        LineIndex {
+            bytes,
+            newlines,
+            chars_at_block,
+        }
+    }
+
+    /// Convert a byte offset to (line, column), both 1-indexed. Same result
+    /// as [`position`] on the input this index was built from.
+    pub fn position(&self, offset: usize) -> (usize, usize) {
+        let offset = offset.min(self.bytes.len());
+        let line = self.newlines.partition_point(|&nl| nl < offset);
+        let line_start = if line == 0 {
+            0
+        } else {
+            self.newlines[line - 1] + 1
+        };
+        let col = 1 + self.chars_before(offset) - self.chars_before(line_start);
+        (line + 1, col)
+    }
+
+    /// Number of chars that start before byte `offset`.
+    fn chars_before(&self, offset: usize) -> usize {
+        let block = offset / CHAR_BLOCK;
+        let from = block * CHAR_BLOCK;
+        let partial = self.bytes[from..offset]
+            .iter()
+            .filter(|&&b| !is_utf8_continuation(b))
+            .count();
+        self.chars_at_block[block] + partial
+    }
+}
+
+fn is_utf8_continuation(b: u8) -> bool {
+    (b & 0xC0) == 0x80
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn line_index_matches_position() {
+        let mut s = String::new();
+        for i in 0..60 {
+            s.push_str(&"é中x🙂".repeat(i % 7));
+            s.push_str(["\n\n", "\n", "\n"][i % 3]);
+            s.push_str(&"a".repeat(i));
+        }
+        for input in ["", "\n", "x", "ab\ncd\nef", s.as_str()] {
+            let index = LineIndex::new(input);
+            for offset in 0..input.len() + 3 {
+                assert_eq!(
+                    index.position(offset),
+                    position(input, offset),
+                    "offset {offset} of {} bytes",
+                    input.len()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn sentences_unchanged_around_punctuation_runs() {
+        let s = "Wait... what?! He said \"no.\" Then left.) ok. Fine... sure. End?!";
+        let got: Vec<&str> = sentences(s).into_iter().map(|r| &s[r]).collect();
+        let want = [
+            "Wait... what?!",
+            "He said \"no.\"",
+            "Then left.) ok.",
+            "Fine... sure.",
+            "End?!",
+        ];
+        assert_eq!(got, want);
+    }
 
     #[test]
     fn splits_simple_sentences() {

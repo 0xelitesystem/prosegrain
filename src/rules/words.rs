@@ -7,7 +7,7 @@
 //! that almost never appear in unselfconscious human prose.
 
 use crate::finding::{Finding, Severity};
-use crate::text::position;
+use crate::text::LineIndex;
 use regex::Regex;
 use std::sync::OnceLock;
 
@@ -127,9 +127,10 @@ fn opener_regexes() -> &'static [Regex] {
 
 pub fn check(input: &str) -> Vec<Finding> {
     let mut findings = Vec::new();
+    let index = LineIndex::new(input);
 
     for m in word_regex().find_iter(input) {
-        let (line, column) = position(input, m.start());
+        let (line, column) = index.position(m.start());
         findings.push(Finding {
             rule: "banned-word",
             severity: Severity::Hint,
@@ -144,7 +145,7 @@ pub fn check(input: &str) -> Vec<Finding> {
     }
 
     for m in filler_regex().find_iter(input) {
-        let (line, column) = position(input, m.start());
+        let (line, column) = index.position(m.start());
         findings.push(Finding {
             rule: "filler-phrase",
             severity: Severity::Warn,
@@ -158,7 +159,7 @@ pub fn check(input: &str) -> Vec<Finding> {
 
     for re in opener_regexes() {
         for m in re.find_iter(input) {
-            let (line, column) = position(input, m.start());
+            let (line, column) = index.position(m.start());
             findings.push(Finding {
                 rule: "assistant-opener",
                 severity: Severity::Strong,

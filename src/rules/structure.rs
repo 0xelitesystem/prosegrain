@@ -13,18 +13,19 @@
 //!     near-identical opening structure.
 
 use crate::finding::{Finding, Severity};
-use crate::text::{paragraphs, position, sentences, word_count};
+use crate::text::{paragraphs, position, sentences, word_count, LineIndex};
 use regex::Regex;
 use std::sync::OnceLock;
 
 pub fn check(input: &str) -> Vec<Finding> {
     let mut findings = Vec::new();
-    findings.extend(not_but_construct(input));
-    findings.extend(false_agency(input));
-    findings.extend(triple_list_cadence(input));
-    findings.extend(negative_listing(input));
+    let index = LineIndex::new(input);
+    findings.extend(not_but_construct(input, &index));
+    findings.extend(false_agency(input, &index));
+    findings.extend(triple_list_cadence(input, &index));
+    findings.extend(negative_listing(input, &index));
     findings.extend(em_dash_overuse(input));
-    findings.extend(triple_parallel_opening(input));
+    findings.extend(triple_parallel_opening(input, &index));
     findings
 }
 
@@ -51,11 +52,11 @@ fn not_but_alt_re() -> &'static Regex {
     })
 }
 
-fn not_but_construct(input: &str) -> Vec<Finding> {
+fn not_but_construct(input: &str, index: &LineIndex) -> Vec<Finding> {
     let mut out = Vec::new();
     for re in [not_but_re(), not_but_alt_re()] {
         for m in re.find_iter(input) {
-            let (line, column) = position(input, m.start());
+            let (line, column) = index.position(m.start());
             out.push(Finding {
                 rule: "not-but-construct",
                 severity: Severity::Strong,
@@ -133,10 +134,10 @@ fn false_agency_re() -> &'static Regex {
     })
 }
 
-fn false_agency(input: &str) -> Vec<Finding> {
+fn false_agency(input: &str, index: &LineIndex) -> Vec<Finding> {
     let mut out = Vec::new();
     for m in false_agency_re().find_iter(input) {
-        let (line, column) = position(input, m.start());
+        let (line, column) = index.position(m.start());
         out.push(Finding {
             rule: "false-agency",
             severity: Severity::Warn,
@@ -165,13 +166,13 @@ fn triple_list_re() -> &'static Regex {
     })
 }
 
-fn triple_list_cadence(input: &str) -> Vec<Finding> {
+fn triple_list_cadence(input: &str, index: &LineIndex) -> Vec<Finding> {
     let mut out = Vec::new();
     for para in paragraphs(input) {
         let slice = &input[para.clone()];
         let count = triple_list_re().find_iter(slice).count();
         if count >= 3 {
-            let (line, column) = position(input, para.start);
+            let (line, column) = index.position(para.start);
             out.push(Finding {
                 rule: "triple-list-cadence",
                 severity: Severity::Warn,
@@ -192,7 +193,7 @@ fn triple_list_cadence(input: &str) -> Vec<Finding> {
 // "Not X. Not Y. Not Z." — short negations in three-beat parallel.
 // ─────────────────────────────────────────────────────────────────────────
 
-fn negative_listing(input: &str) -> Vec<Finding> {
+fn negative_listing(input: &str, index: &LineIndex) -> Vec<Finding> {
     let mut out = Vec::new();
     let sents = sentences(input);
     let starts_with_not = |r: &std::ops::Range<usize>| {
@@ -210,7 +211,7 @@ fn negative_listing(input: &str) -> Vec<Finding> {
         } else {
             if run_len >= 3 {
                 if let Some(start) = &run_start {
-                    let (line, column) = position(input, start.start);
+                    let (line, column) = index.position(start.start);
                     out.push(Finding {
                         rule: "negative-listing",
                         severity: Severity::Warn,
@@ -229,7 +230,7 @@ fn negative_listing(input: &str) -> Vec<Finding> {
     }
     if run_len >= 3 {
         if let Some(start) = &run_start {
-            let (line, column) = position(input, start.start);
+            let (line, column) = index.position(start.start);
             out.push(Finding {
                 rule: "negative-listing",
                 severity: Severity::Warn,
@@ -290,7 +291,7 @@ fn first_word_lower(s: &str) -> Option<String> {
         .filter(|w| !w.is_empty())
 }
 
-fn triple_parallel_opening(input: &str) -> Vec<Finding> {
+fn triple_parallel_opening(input: &str, index: &LineIndex) -> Vec<Finding> {
     let sents = sentences(input);
     let mut out = Vec::new();
     if sents.len() < 3 {
@@ -305,7 +306,7 @@ fn triple_parallel_opening(input: &str) -> Vec<Finding> {
             // skip articles/conjunctions that are common honest openers
             let skip = matches!(a.as_str(), "the" | "a" | "an" | "and" | "but" | "or" | "so");
             if !skip && a == b && b == c && a.len() > 1 {
-                let (line, column) = position(input, sents[i].start);
+                let (line, column) = index.position(sents[i].start);
                 out.push(Finding {
                     rule: "triple-parallel-opening",
                     severity: Severity::Warn,

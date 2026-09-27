@@ -7,6 +7,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed
+
+- Plain output no longer prints control characters from the linted file. ESC, CR and other C0 controls (except newline and tab), DEL, C1 controls and bidi controls in snippets are shown as `\u{..}` escapes, so a file cannot clear the screen or fake the verdict. JSON output is unchanged.
+- Analysis time is now linear in file size. Line and column lookups used to rescan the file from the start for every finding, and a long run of dots was rescanned from every dot, so a small crafted file could keep a CI job busy for minutes.
+
 ## [0.1.0], 2026-05-09
 
 First release. CLI works, tests pass, README dogfoods clean.
